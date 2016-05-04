@@ -93,3 +93,50 @@ on the target bean, letting the servlet container manage the filter lifecycle.
 	</filter-mapping>
 	Spring bean配置文件加入：
 	<bean id="myBean" class="com.XXX.YYYY.TestClass" />
+
+Spring字符编码问题，解决中文乱码
+1.继承DispatcherServlet添加实现设置编码 
+DispatcherServlet: 将所有请求进行识别，分发给对应的处理器进行处理，如同中央控制器
+public class DispatchEncodingServlet extends DispatcherServlet {
+	private String encoding;
+	private Boolean forceEncoding = false;
+
+	public void setEncoding(String encoding) {
+		this.encoding = encoding;
+	}
+
+	public void setForceEncoding(Boolean forceEncoding) {
+		this.forceEncoding = forceEncoding;
+	}
+
+	@Override
+	protected void doService(HttpServletRequest request,
+			HttpServletResponse response) throws Exception {
+		//参考CharacterEncodingFilter
+		if (encoding != null
+				&& (forceEncoding || request.getCharacterEncoding() == null)) {
+			request.setCharacterEncoding(encoding);
+			if (forceEncoding) {
+				response.setCharacterEncoding(encoding);
+			}
+		}
+		super.doService(request, response);
+	}
+}
+2.web.xml文件中配置 
+<servlet>
+    <servlet-name>appServlet</servlet-name>
+    <servlet-class>com.alibaba.meeting.common.DispatchEncodingServlet</servlet-class>
+    <init-param>
+      <param-name>contextConfigLocation</param-name>
+      <param-value>/WEB-INF/spring/appServlet/servlet-context.xml</param-value>
+    </init-param>
+    <init-param>
+  		<param-name>encoding</param-name>
+  		<param-value>UTF-8</param-value>
+  	</init-param>
+  	<init-param>
+  		<param-name>forceEncoding</param-name>
+  		<param-value>true</param-value>
+  	</init-param>
+  </servlet>
