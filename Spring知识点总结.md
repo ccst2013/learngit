@@ -94,7 +94,48 @@ on the target bean, letting the servlet container manage the filter lifecycle.
 	Spring bean配置文件加入：
 	<bean id="myBean" class="com.XXX.YYYY.TestClass" />
 
-Spring字符编码问题，解决中文乱码
+Spring字符编码org.springframework.web.filter.CharacterEncodingFilter（解决不同编码导致乱码问题）
+ * Servlet Filter that allows one to specify a character encoding for requests.
+ * This is useful because current browsers typically do not set a character
+ * encoding even if specified in the HTML page or form.
+ *(以上表明在html页面中设置的编码是无效的，显示编码实际上在response中设定)
+ * This filter can either apply its encoding if the request does not already
+ * specify an encoding, or enforce this filter's encoding in any case
+ * ("forceEncoding"="true"). In the latter case, the encoding will also be
+ * applied as default response encoding (although this will usually be overridden
+ * by a full content type set in the view).
+在源码中:
+	protected void doFilterInternal(
+			HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
+
+		if (this.encoding != null && (this.forceEncoding || request.getCharacterEncoding() == null)) {
+			request.setCharacterEncoding(this.encoding);
+			if (this.forceEncoding) {
+				response.setCharacterEncoding(this.encoding);
+			}
+		}
+		filterChain.doFilter(request, response);
+	}
+说明encoding是用来设置request编码格式，forceencoding是用来决定是否把response也设置为encoding编码。
+使用方法一:
+<filter>
+	<filter-name>setCharacterEncoding</filter-name>
+	<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+	<init-param>
+        <param-name>encoding</param-name>
+        <param-value>UTF-8</param-value>
+    </init-param>
+    <init-param>
+        <param-name>forceEncoding</param-name>  <!-- default false -->
+        <param-value>true</param-value>
+    </init-param>
+</filter>
+<filter-mapping>
+	<filter-name>setCharacterEncoding</filter-name>
+	<url-pattern>/*</url-pattern>
+</filter-mapping>
+使用方法二:(继承Disaptcher)
 1.继承DispatcherServlet添加实现设置编码 
 DispatcherServlet: 将所有请求进行识别，分发给对应的处理器进行处理，如同中央控制器
 public class DispatchEncodingServlet extends DispatcherServlet {
@@ -123,7 +164,7 @@ public class DispatchEncodingServlet extends DispatcherServlet {
 		super.doService(request, response);
 	}
 }
-2.web.xml文件中配置 
+web.xml文件中配置 
 <servlet>
     <servlet-name>appServlet</servlet-name>
     <servlet-class>com.alibaba.meeting.common.DispatchEncodingServlet</servlet-class>
