@@ -181,3 +181,34 @@ web.xml文件中配置
   		<param-value>true</param-value>
   	</init-param>
   </servlet>
+
+Spring的BeanPostProcessor接口org.springframework.beans.factory.config.BeanPostProcessor
+ * ApplicationContexts can autodetect BeanPostProcessor beans in their
+ * bean definitions and apply them to any beans subsequently created.
+ * Plain bean factories allow for programmatic registration of post-processors,
+ * applying to all beans created through this factory
+配置和初始化bean后添加一些自己的逻辑处理;
+BeanPostProcessor的作用域是容器级的，它只和所在容器有关。如果你在容器中定义了BeanPostProcessor,它仅仅对此容器中的bean进行后置。它不会对定义在另一个容器中的bean进行任何处理.BeanFactory和ApplicationContext对待bean后置处理器稍有不同。ApplicationContext会自动检测在配置文件中实现了BeanPostProcessor接口的所有bean，并把它们注册为后置处理器，然后在容器创建bean的适当时候调用它,BeanFactory实现的时候，bean 后置处理器必须通过下面类似的代码显式地去注册;
+public class BeanPostPrcessorImpl implements BeanPostProcessor {
+    // Bean 实例化之前进行的处理
+    public Object postProcessBeforeInitialization(Object bean, String beanName)
+           throws BeansException {
+       System.out.println("对象" + beanName + "开始实例化");
+       return bean;
+    }
+    // Bean 实例化之后进行的处理
+    public Object postProcessAfterInitialization(Object bean, String beanName)
+           throws BeansException {
+       System.out.println("对象" + beanName + "实例化完成");
+       return bean;
+    }
+}
+将这个BeanPostProcessor接口的实现定义到容器中:
+<bean id="beanPostProcressorImpl" class="springTest.BeanPostProcressorImpl">
+BeanFactory实现:
+ConfigurableBeanFactory bf = new XmlBeanFactory(new ClassPathResource(
+				"beans.xml"));
+		BeanPostProcressorImpl bpp = (BeanPostProcressorImpl) bf
+				.getBean("beanPostProcressorImpl");
+		bf.addBeanPostProcessor(bpp);
+
