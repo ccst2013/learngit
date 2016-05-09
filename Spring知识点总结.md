@@ -212,3 +212,107 @@ ConfigurableBeanFactory bf = new XmlBeanFactory(new ClassPathResource(
 				.getBean("beanPostProcressorImpl");
 		bf.addBeanPostProcessor(bpp);
 
+Java注解(Annotation)详解及实现（利用反射机制）
+1.java元注解(meta-Annotation)包含4个：@Target,@Retention,@Documented,@Inherited
+@Target:说明了Annotation修饰对象范围，可用于packages，types(类，接口，枚举，Annotation类型)，类型成员(方法，构造方法，成员变量，枚举值)，方法参数和本地变量(循环变量和catch参数)
+取值ElementType：
+		1.CONSTRUCTOR:用于描述构造器
+　　　　2.FIELD:用于描述域
+　　　　3.LOCAL_VARIABLE:用于描述局部变量
+　　　　4.METHOD:用于描述方法
+　　　　5.PACKAGE:用于描述包
+　　　　6.PARAMETER:用于描述参数
+　　　　7.TYPE:用于描述类、接口(包括注解类型) 或enum声明
+
+@Retention：定义该Annotation被保留时间长短
+取值RetentionPoicy：
+　　　　1.SOURCE:在源文件中有效（即源文件保留）
+　　　　2.CLASS:在class文件中有效（即class保留）
+　　　　3.RUNTIME:在运行时有效（即运行时保留）
+
+@Documented：用于描述其它类型的annotation应该被作为被标注的程序成员的公共API，因此可以被例如javadoc此类的工具文档化
+
+@Inherited：元注解是一个标记注解，@Inherited阐述了某个被标注的类型是被继承的。如果一个使用了@Inherited修饰的annotation类型被用于一个class，则这个annotation将被用于该class的子类
+
+2.自定义注解(Annotation)
+定义注解格式：
+　　public @interface 注解名 {定义体}
+
+注解参数的可支持数据类型：
+　　　　1.所有基本数据类型（int,float,boolean,byte,double,char,long,short)
+　　　　2.String类型
+　　　　3.Class类型
+　　　　4.enum类型
+　　　　5.Annotation类型
+　　　　6.以上所有类型的数组
+//Example:
+	@Target({ElementType.Field})
+	@Retention(RetentionPoicy.RUNTIME)
+	@Documented
+	public @interface MyAnnotation {
+		public String name() default "";
+		int age() default 0;
+	}
+Annotation类型里面的参数该怎么设定:
+　　第一,只能用public或默认(default)这两个访问权修饰.例如,String value();这里把方法设为defaul默认类型；　 　
+　　第二,参数成员只能用基本类型byte,short,char,int,long,float,double,boolean八种基本数据类型和 String,Enum,Class,annotations等数据类型,以及这一些类型的数组.例如,String value();这里的参数成员就为String;　　
+　　第三,如果只有一个参数成员,最好把参数名称设为"value",后加小括号.例:下面的例子FruitName注解就只有一个参数成员。
+
+3.自定义注解的使用
+//Person.java
+	public class Person {
+		@MyAnnotation(name="YYY")
+		private String name;
+		@MyAnnotation(age=23)
+		private int age;
+		...
+	}
+
+//MyAnnotation.java
+	@Target({ElementType.Field})
+	@Retention(RetentionPoicy.RUNTIME)
+	@Documented
+	public @interface MyAnnotation {
+		public String name() default "";
+		int age() default 0;
+	}
+//PersonTest.java
+	public void personTest() {
+		Person p = new Person();
+		Class<? extends Person> pClass = p.getClass();
+		Field[] fileds = pClass.getDeclaredFields();//获取已有字段，不包含继承的
+		if (fileds.length > 0) {
+			for (int i = 0; i < fileds.length; i++) {
+
+			//判断字段是否可访问，不可访问的话设置为可访问
+				boolean isAccess = false;
+				if (!fileds[i].isAccessible()) {
+					isAccess = true;
+					fileds[i].setAccessible(true);
+				}
+
+			//判断当前字段是否包含MyClass类注解，若有，这执行相关赋值操作
+				if (fileds[i].isAnnotationPresent(MyClass.class)) {
+					try {
+						MyClass classType = fileds[i]
+								.getDeclaredAnnotation(MyClass.class);
+						Method method = MyClass.class.getMethod(
+								fileds[i].getName(), null);
+						fileds[i].set(p, method.invoke(classType, null));
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+
+			//设置字段属性为不可见
+				if (isAccess) {
+					fileds[i].setAccessible(false);
+				}
+			}
+		}
+		System.out.println(p.getName());
+	}
+
+
+
+
