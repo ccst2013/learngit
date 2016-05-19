@@ -35,10 +35,24 @@ placeholders with values from the given properties.
     	</property>
 	</bean>
 4.方法四: 使用PropertyPlaceholderConfigurer的实例<context:property-placeholder/>
-	<context:property-placeholder location="classpath:XXX/jdbc.properties"/>
+	<context:property-placeholder location="classpath:XXX/jdbc.properties" file-encoding="utf8"/>
+	此处file-encoding="utf-8"会报异常，需声明为字符串
+	<bean id="utf8" class="java.lang.String">
+		<constructor-arg value="utf-8" />
+	</bean>
 	(备注:需要引入名字空间)
 
-
+5.实现加密属性文件两个方法任选一个实现
+	public calss EncryptPropertyPlaceholder extends PropertyPlaceholderConfigurer {
+		@Override
+		protected String convertProperty(String propertyName, String propertyValue){
+			//实现加密/解密
+		}
+		@Override
+		protected void convertProperties(Properties props) {
+			//实现加密/解密
+		}
+	}
 Spring Filter代理bean解决Filter中无法注入bean问题(DelegatingFilterProxy)
 Proxy for a standard Servlet Filter, delegating to a Spring-managed bean that
 implements the Filter interface. Supports a "targetBeanName" filter init-param
@@ -313,6 +327,35 @@ Annotation类型里面的参数该怎么设定:
 		System.out.println(p.getName());
 	}
 
+Spring自定义属性编辑器org.springframework.beans.factory.config.CustomEditorConfigurer
+用于注册属性编辑器实例
+<bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
+	<property name="customEditors">
+		<map>
+			<entry key="com.xxx.Car" value="com.xxx.CarEditor" />
+		</map>
+	</property>
+</bean>
+<bean id="boss" class="com.xxx.boss">
+	<property name="car" value="120,CA7789,Bule" />
+	...
+</bean>
 
+public class Car {
+	private int speed;
+	private String brand;
+	private String color; 
+	...
+}
 
+public class CarEditor extends java.beans.PropertyEditorSupport {
+	public void setAsText(String text){
+		String[] infos = text.split(",");
+		Car car = new Car();
+		car.setSpeed(Integer.parseInt(infos[0]));
+		car.setBrand(infos[1]);
+		car.setColor(infos[2]);
+		setValue(car); //置换转换后的对象
+	}
+}
 

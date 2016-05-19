@@ -27,6 +27,15 @@
 </listener>
 
 3.Spring MVC的主控制器org.springframework.web.servlet.DispatcherServlet（Spring MVC通过<servlet>来截获url请求）
+* Calling #setContextConfigLocation init-param 'contextConfigLocation'
+* will dictate which XML files will be loaded by the
+* #DEFAULT_CONTEXT_CLASS default XmlWebApplicationContext
+* Calling #setContextClass init-param 'contextClass' overrides the
+* default XmlWebApplicationContext and allows for specifying an alternative class,
+* such as AnnotationConfigWebApplicationContext.
+* Calling #setContextInitializerClasses init-param 'contextInitializerClasses'
+* indicates which {@code ApplicationContextInitializer} classes should be used to
+* further configure the internal application context prior to refresh().
 <servlet>
 	<servlet-name>dispatcher</servlet-name>
 	<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
